@@ -32,3 +32,18 @@ La organización modular permite dividir la aplicación en componentes independi
 <img src="assets/08-productos.png" width="600">
 
 El flujo de datos entre la API REST y PostgreSQL se realiza mediante un ORM que traduce las peticiones HTTP en consultas SQL y viceversa, apoyándose en BaseEntity como un estándar de arquitectura. Al entrar, la petición procesa los datos y BaseEntity inyecta automáticamente campos clave como el id y las marcas de tiempo de auditoría (createdAt, updatedAt) antes de que el ORM ejecute la inserción o actualización en la base de datos. Al salir, PostgreSQL devuelve los registros, el ORM los convierte en objetos estructurados que heredan de BaseEntity, y finalmente la API los serializa en formato JSON para entregarlos al cliente.
+
+### Respuesta 400 Bad Request al enviar los datos incorrectos.
+<img src="assets/09_usuario_erroneo.png" width="600">
+
+### Eliminación de un producto
+<img src="assets/10_eliminado_exitoso.png" width="600">
+
+<img src="assets/10_eliminado_correcto.png" width="600">
+
+### Intento de eliminar un producto eliminado.
+
+<img src="assets/11_intento_eliminacion.png" width="600">
+
+### Actualización Parcial de Contraseña
+<img src="assets/12_hashPass.png" width="600">

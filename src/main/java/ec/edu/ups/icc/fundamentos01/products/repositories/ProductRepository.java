@@ -3,11 +3,12 @@ package ec.edu.ups.icc.fundamentos01.products.repositories;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
-    
-    // Método personalizado para traer solo productos que no estén borrados lógicamente
-    List<ProductEntity> findByDeletedFalse();
+
+    Optional<ProductEntity> findByIdAndDeletedFalse(Long id);
+
+    Optional<ProductEntity> findByNameAndDeletedFalse(String name);
 }

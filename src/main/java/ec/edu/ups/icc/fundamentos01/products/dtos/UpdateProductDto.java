@@ -1,22 +1,56 @@
 package ec.edu.ups.icc.fundamentos01.products.dtos;
 
-import java.math.BigDecimal;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class UpdateProductDto {
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
     private String name;
-    private String description;
-    private BigDecimal price;
-    private Integer stock;
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    @Min(value = 0, message = "El precio no puede ser menor a 0")
+    private double price;
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    @Min(value = 0, message = "El stock no puede ser menor a 0")
+    private int stock;
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public UpdateProductDto() {
+    }
 
-    public Integer getStock() { return stock; }
-    public void setStock(Integer stock) { this.stock = stock; }
+    public UpdateProductDto(
+            @NotBlank(message = "El nombre es obligatorio") @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres") String name,
+            @Min(value = 0, message = "El precio no puede ser menor a 0") double price,
+            @Min(value = 0, message = "El stock no puede ser menor a 0") int stock) {
+        this.name = name;
+        this.price = price;
+        this.stock = stock;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
+    }
+
+    
 }

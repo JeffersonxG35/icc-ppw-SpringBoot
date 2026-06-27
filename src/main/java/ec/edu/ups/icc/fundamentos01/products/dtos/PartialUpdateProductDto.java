@@ -1,22 +1,53 @@
 package ec.edu.ups.icc.fundamentos01.products.dtos;
 
-import java.math.BigDecimal;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 
 public class PartialUpdateProductDto {
+    @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
     private String name;
-    private String description;
-    private BigDecimal price;
+
+    @Min(value = 0, message = "El precio no puede ser menor a 0")
+    private Double price; // Usar Wrapper para permitir nulos en actualizaciones parciales
+
+    @Min(value = 0, message = "El stock no puede ser menor a 0")
     private Integer stock;
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public PartialUpdateProductDto() {
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public PartialUpdateProductDto(
+            @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres") String name,
+            @Min(value = 0, message = "El precio no puede ser menor a 0") Double price,
+            @Min(value = 0, message = "El stock no puede ser menor a 0") Integer stock) {
+        this.name = name;
+        this.price = price;
+        this.stock = stock;
+    }
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public String getName() {
+        return name;
+    }
 
-    public Integer getStock() { return stock; }
-    public void setStock(Integer stock) { this.stock = stock; }
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    
 }

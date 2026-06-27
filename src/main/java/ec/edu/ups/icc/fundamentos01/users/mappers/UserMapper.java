@@ -1,4 +1,4 @@
-package ec.edu.ups.icc.fundamentos01.users.mappers;
+/*package ec.edu.ups.icc.fundamentos01.users.mappers;
 
 import ec.edu.ups.icc.fundamentos01.users.dtos.*;
 import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
@@ -42,4 +42,4 @@ public class UserMapper {
         dto.setEmail(model.getEmail());
         return dto;
     }
-}
+}*/

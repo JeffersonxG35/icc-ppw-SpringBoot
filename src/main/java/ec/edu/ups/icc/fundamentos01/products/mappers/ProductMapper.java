@@ -1,4 +1,4 @@
-package ec.edu.ups.icc.fundamentos01.products.mappers;
+/*package ec.edu.ups.icc.fundamentos01.products.mappers;
 
 import ec.edu.ups.icc.fundamentos01.products.dtos.*;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
@@ -14,7 +14,7 @@ public class ProductMapper {
         model.setStock(dto.getStock());
         return model;
     }
-
+z
     public static ProductModel toModelFromEntity(ProductEntity entity) {
         ProductModel model = new ProductModel();
         model.setId(entity.getId());
@@ -47,4 +47,4 @@ public class ProductMapper {
         dto.setStock(model.getStock());
         return dto;
     }
-}
+}*/
