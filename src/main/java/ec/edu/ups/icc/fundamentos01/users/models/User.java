@@ -1,4 +1,4 @@
-package ec.edu.ups.icc.fundamentos01.users.models;
+/*package ec.edu.ups.icc.fundamentos01.users.models;
 
 import ec.edu.ups.icc.fundamentos01.users.dtos.CreateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.PartialUpdateUserDto;
@@ -77,4 +77,4 @@ public class User {
     public void setPassword(String password) { 
         this.password = password; 
     }
-}
+}*/

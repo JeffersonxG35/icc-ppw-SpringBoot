@@ -3,6 +3,7 @@ package ec.edu.ups.icc.fundamentos01.products.dtos;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class CreateProductDto {
@@ -14,14 +15,70 @@ public class CreateProductDto {
     private double price;
 
     @Min(value = 0, message = "El stock no puede ser menor a 0")
-    private int stock;
+    private Integer stock;
 
-    public CreateProductDto() {}
+    @NotNull(message = "El ID del usuario es obligatorio")
+    private Long userId;
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
-    public int getStock() { return stock; }
-    public void setStock(int stock) { this.stock = stock; }
+    @NotNull(message = "El ID de la categoría es obligatorio")
+    private Long categoryId;
+
+    public CreateProductDto() {
+    }
+
+    public CreateProductDto(
+            @NotBlank(message = "El nombre es obligatorio") @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres") String name,
+            @Min(value = 0, message = "El precio no puede ser menor a 0") double price,
+            @Min(value = 0, message = "El stock no puede ser menor a 0") Integer stock,
+            @NotNull(message = "El ID del usuario es obligatorio") Long userId,
+            @NotNull(message = "El ID de la categoría es obligatorio") Long categoryId) {
+        this.name = name;
+        this.price = price;
+        this.stock = stock;
+        this.userId = userId;
+        this.categoryId = categoryId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    
+    
 }

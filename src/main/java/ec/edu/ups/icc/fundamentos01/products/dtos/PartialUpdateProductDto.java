@@ -8,10 +8,13 @@ public class PartialUpdateProductDto {
     private String name;
 
     @Min(value = 0, message = "El precio no puede ser menor a 0")
-    private Double price; // Usar Wrapper para permitir nulos en actualizaciones parciales
+    private Double price; 
 
     @Min(value = 0, message = "El stock no puede ser menor a 0")
     private Integer stock;
+
+    private Long categoryId;
+    
 
     public PartialUpdateProductDto() {
     }
@@ -19,10 +22,12 @@ public class PartialUpdateProductDto {
     public PartialUpdateProductDto(
             @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres") String name,
             @Min(value = 0, message = "El precio no puede ser menor a 0") Double price,
-            @Min(value = 0, message = "El stock no puede ser menor a 0") Integer stock) {
+            @Min(value = 0, message = "El stock no puede ser menor a 0") Integer stock,
+            Long categoryId) {
         this.name = name;
         this.price = price;
         this.stock = stock;
+        this.categoryId = categoryId;
     }
 
     public String getName() {
@@ -49,5 +54,11 @@ public class PartialUpdateProductDto {
         this.stock = stock;
     }
 
-    
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
 }

@@ -1,31 +1,45 @@
 package ec.edu.ups.icc.fundamentos01.products.services;
 
+import ec.edu.ups.icc.fundamentos01.categories.entities.CategoryEntity;
+import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
 import ec.edu.ups.icc.fundamentos01.core.exceptions.domain.ConflictException;
 import ec.edu.ups.icc.fundamentos01.core.exceptions.domain.NotFoundException;
-import ec.edu.ups.icc.fundamentos01.products.dtos.*;
+import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
+import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
+import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
-import ec.edu.ups.icc.fundamentos01.products.models.Product;
+import ec.edu.ups.icc.fundamentos01.products.mappers.ProductMapper;
 import ec.edu.ups.icc.fundamentos01.products.repositories.ProductRepository;
+import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
+import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
 
-    public ProductServiceImpl(ProductRepository productRepository) {
+    public ProductServiceImpl(
+            ProductRepository productRepository,
+            UserRepository userRepository,
+            CategoryRepository categoryRepository
+    ) {
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Override
     public List<ProductResponseDto> findAll() {
-        return productRepository.findAll().stream()
-                .filter(entity -> !entity.isDeleted())
-                .map(Product::fromEntity)
-                .map(Product::toResponseDto)
-                .collect(Collectors.toList());
+        return productRepository.findByDeletedFalse()
+                .stream()
+                .map(ProductMapper::toResponse)
+                .toList();
     }
 
     @Override
@@ -33,63 +47,126 @@ public class ProductServiceImpl implements ProductService {
         ProductEntity entity = productRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
 
-        return Product.fromEntity(entity).toResponseDto();
+        return ProductMapper.toResponse(entity);
     }
 
     @Override
     public ProductResponseDto create(CreateProductDto dto) {
-        productRepository.findByNameAndDeletedFalse(dto.getName()).ifPresent(p -> {
-            throw new ConflictException("El nombre del producto ya está registrado");
-        });
+        UserEntity owner = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
 
-        Product productModel = Product.fromDto(dto);
-        ProductEntity entity = productModel.toEntity();
+        if (owner.isDeleted()) {
+            throw new NotFoundException("Usuario no encontrado");
+        }
+
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+
+        if (category.isDeleted()) {
+            throw new NotFoundException("Categoría no encontrada");
+        }
+
+        if (productRepository.findByNameIgnoreCaseAndDeletedFalse(dto.getName()).isPresent()) {
+            throw new ConflictException("El nombre del producto ya está registrado");
+        }
+
+        ProductEntity entity = new ProductEntity();
+        entity.setName(dto.getName());
+        entity.setPrice(dto.getPrice());
+        entity.setStock(dto.getStock());
+        entity.setOwner(owner);
+        entity.setCategory(category);
+
         ProductEntity savedEntity = productRepository.save(entity);
-        return Product.fromEntity(savedEntity).toResponseDto();
+
+        return ProductMapper.toResponse(savedEntity);
     }
 
     @Override
     public ProductResponseDto update(Long id, UpdateProductDto dto) {
-        ProductEntity existingEntity = productRepository.findById(id)
+        ProductEntity entity = productRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
 
-        if (existingEntity.isDeleted()) {
-            throw new NotFoundException("Producto no encontrado");
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+
+        if (category.isDeleted()) {
+            throw new NotFoundException("Categoría no encontrada");
         }
 
-        Product productModel = Product.fromEntity(existingEntity);
-        productModel.update(dto);
+        entity.setName(dto.getName());
+        entity.setPrice(dto.getPrice());
+        entity.setStock(dto.getStock());
+        entity.setCategory(category);
 
-        ProductEntity savedEntity = productRepository.save(productModel.toEntity());
-        return Product.fromEntity(savedEntity).toResponseDto();
+        ProductEntity savedEntity = productRepository.save(entity);
+
+        return ProductMapper.toResponse(savedEntity);
     }
 
     @Override
     public ProductResponseDto partialUpdate(Long id, PartialUpdateProductDto dto) {
-        ProductEntity existingEntity = productRepository.findById(id)
+        ProductEntity entity = productRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
 
-        if (existingEntity.isDeleted()) {
-            throw new NotFoundException("Producto no encontrado");
+        if (dto.getName() != null) {
+            entity.setName(dto.getName());
         }
 
-        Product productModel = Product.fromEntity(existingEntity);
-        productModel.partialUpdate(dto);
+        if (dto.getPrice() != null) {
+            entity.setPrice(dto.getPrice());
+        }
 
-        ProductEntity savedEntity = productRepository.save(productModel.toEntity());
-        return Product.fromEntity(savedEntity).toResponseDto();
+        if (dto.getStock() != null) {
+            entity.setStock(dto.getStock());
+        }
+
+        if (dto.getCategoryId() != null) {
+            CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+
+            if (category.isDeleted()) {
+                throw new NotFoundException("Categoría no encontrada");
+            }
+
+            entity.setCategory(category);
+        }
+
+        ProductEntity savedEntity = productRepository.save(entity);
+
+        return ProductMapper.toResponse(savedEntity);
     }
 
     @Override
     public void delete(Long id) {
-        ProductEntity entity = productRepository.findById(id)
+        ProductEntity entity = productRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
-
-        if (entity.isDeleted()) {
-            throw new NotFoundException("El producto ya se encuentra eliminado");
-        }
 
         entity.setDeleted(true);
         productRepository.save(entity);
+    }
+
+    @Override
+    public List<ProductResponseDto> findByUserId(Long userId) {
+        if (!userRepository.existsByIdAndDeletedFalse(userId)) {
+            throw new NotFoundException("Usuario no encontrado");
+        }
+
+        return productRepository.findByOwner_IdAndDeletedFalse(userId)
+                .stream()
+                .map(ProductMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<ProductResponseDto> findByCategoryId(Long categoryId) {
+        if (!categoryRepository.existsByIdAndDeletedFalse(categoryId)) {
+            throw new NotFoundException("Categoría no encontrada");
+        }
+
+        return productRepository.findByCategory_IdAndDeletedFalse(categoryId)
+                .stream()
+                .map(ProductMapper::toResponse)
+                .toList();
     }
 }

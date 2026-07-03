@@ -36,12 +36,14 @@ public class ProductsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> createOrUpdate(@PathVariable Long id, @Valid @RequestBody UpdateProductDto dto) {
+    public ResponseEntity<ProductResponseDto> createOrUpdate(@PathVariable Long id,
+            @Valid @RequestBody UpdateProductDto dto) {
         return ResponseEntity.ok(productService.update(id, dto));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> partialUpdate(@PathVariable Long id, @Valid @RequestBody PartialUpdateProductDto dto) {
+    public ResponseEntity<ProductResponseDto> partialUpdate(@PathVariable Long id,
+            @Valid @RequestBody PartialUpdateProductDto dto) {
         return ResponseEntity.ok(productService.partialUpdate(id, dto));
     }
 
@@ -49,5 +51,15 @@ public class ProductsController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         productService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<ProductResponseDto>> findByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(productService.findByUserId(userId));
+    }
+
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<ProductResponseDto>> findByCategoryId(@PathVariable Long categoryId) {
+        return ResponseEntity.ok(productService.findByCategoryId(categoryId));
     }
 }

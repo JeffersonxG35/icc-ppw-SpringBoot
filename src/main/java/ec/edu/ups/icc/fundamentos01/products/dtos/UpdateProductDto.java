@@ -3,6 +3,7 @@ package ec.edu.ups.icc.fundamentos01.products.dtos;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class UpdateProductDto {
@@ -14,7 +15,10 @@ public class UpdateProductDto {
     private double price;
 
     @Min(value = 0, message = "El stock no puede ser menor a 0")
-    private int stock;
+    private Integer stock;
+
+    @NotNull(message = "El ID de la categoría es obligatorio")
+    private Long categoryId;
 
     public UpdateProductDto() {
     }
@@ -22,10 +26,12 @@ public class UpdateProductDto {
     public UpdateProductDto(
             @NotBlank(message = "El nombre es obligatorio") @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres") String name,
             @Min(value = 0, message = "El precio no puede ser menor a 0") double price,
-            @Min(value = 0, message = "El stock no puede ser menor a 0") int stock) {
+            @Min(value = 0, message = "El stock no puede ser menor a 0") Integer stock,
+            @NotNull(message = "El ID de la categoría es obligatorio") Long categoryId) {
         this.name = name;
         this.price = price;
         this.stock = stock;
+        this.categoryId = categoryId;
     }
 
     public String getName() {
@@ -44,13 +50,20 @@ public class UpdateProductDto {
         this.price = price;
     }
 
-    public int getStock() {
+    public Integer getStock() {
         return stock;
     }
 
-    public void setStock(int stock) {
+    public void setStock(Integer stock) {
         this.stock = stock;
     }
 
-    
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+
 }
