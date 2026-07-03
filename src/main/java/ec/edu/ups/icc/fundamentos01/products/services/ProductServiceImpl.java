@@ -2,12 +2,10 @@ package ec.edu.ups.icc.fundamentos01.products.services;
 
 import ec.edu.ups.icc.fundamentos01.categories.entities.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
+import ec.edu.ups.icc.fundamentos01.core.exceptions.domain.BadRequestException;
 import ec.edu.ups.icc.fundamentos01.core.exceptions.domain.ConflictException;
 import ec.edu.ups.icc.fundamentos01.core.exceptions.domain.NotFoundException;
-import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
-import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
-import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
-import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
+import ec.edu.ups.icc.fundamentos01.products.dtos.*;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
 import ec.edu.ups.icc.fundamentos01.products.mappers.ProductMapper;
 import ec.edu.ups.icc.fundamentos01.products.repositories.ProductRepository;
@@ -15,7 +13,9 @@ import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
 import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -24,11 +24,8 @@ public class ProductServiceImpl implements ProductService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
 
-    public ProductServiceImpl(
-            ProductRepository productRepository,
-            UserRepository userRepository,
-            CategoryRepository categoryRepository
-    ) {
+    public ProductServiceImpl(ProductRepository productRepository, UserRepository userRepository,
+                              CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
@@ -59,12 +56,7 @@ public class ProductServiceImpl implements ProductService {
             throw new NotFoundException("Usuario no encontrado");
         }
 
-        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
-
-        if (category.isDeleted()) {
-            throw new NotFoundException("Categoría no encontrada");
-        }
+        Set<CategoryEntity> categories = validateAndGetCategories(dto.getCategoryIds());
 
         if (productRepository.findByNameIgnoreCaseAndDeletedFalse(dto.getName()).isPresent()) {
             throw new ConflictException("El nombre del producto ya está registrado");
@@ -75,7 +67,7 @@ public class ProductServiceImpl implements ProductService {
         entity.setPrice(dto.getPrice());
         entity.setStock(dto.getStock());
         entity.setOwner(owner);
-        entity.setCategory(category);
+        entity.setCategories(categories);
 
         ProductEntity savedEntity = productRepository.save(entity);
 
@@ -87,17 +79,12 @@ public class ProductServiceImpl implements ProductService {
         ProductEntity entity = productRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
 
-        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
-
-        if (category.isDeleted()) {
-            throw new NotFoundException("Categoría no encontrada");
-        }
+        Set<CategoryEntity> categories = validateAndGetCategories(dto.getCategoryIds());
 
         entity.setName(dto.getName());
         entity.setPrice(dto.getPrice());
         entity.setStock(dto.getStock());
-        entity.setCategory(category);
+        entity.setCategories(categories);
 
         ProductEntity savedEntity = productRepository.save(entity);
 
@@ -121,15 +108,9 @@ public class ProductServiceImpl implements ProductService {
             entity.setStock(dto.getStock());
         }
 
-        if (dto.getCategoryId() != null) {
-            CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
-                    .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
-
-            if (category.isDeleted()) {
-                throw new NotFoundException("Categoría no encontrada");
-            }
-
-            entity.setCategory(category);
+        if (dto.getCategoryIds() != null) {
+            Set<CategoryEntity> categories = validateAndGetCategories(dto.getCategoryIds());
+            entity.setCategories(categories);
         }
 
         ProductEntity savedEntity = productRepository.save(entity);
@@ -164,9 +145,108 @@ public class ProductServiceImpl implements ProductService {
             throw new NotFoundException("Categoría no encontrada");
         }
 
-        return productRepository.findByCategory_IdAndDeletedFalse(categoryId)
+        return productRepository.findByCategoryId(categoryId)
                 .stream()
                 .map(ProductMapper::toResponse)
                 .toList();
     }
+
+    @Override
+    public List<ProductResponseDto> findByUserIdWithFilters(Long userId, ProductFilterByUserDto filters) {
+        if (!userRepository.existsByIdAndDeletedFalse(userId)) {
+            throw new NotFoundException("Usuario no encontrado");
+        }
+
+        validateUserFilters(filters);
+
+        String name = normalizeName(filters.getName());
+
+        return productRepository.findByOwnerIdWithFilters(
+                        userId,
+                        name,
+                        filters.getMinPrice(),
+                        filters.getMaxPrice(),
+                        filters.getCategoryId()
+                )
+                .stream()
+                .map(ProductMapper::toResponse)
+                .toList();
+    }
+
+    private Set<CategoryEntity> validateAndGetCategories(Set<Long> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            throw new BadRequestException("Debe seleccionar al menos una categoría");
+        }
+
+        Set<CategoryEntity> categories = new HashSet<>();
+
+        for (Long categoryId : categoryIds) {
+            CategoryEntity category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+
+            if (category.isDeleted()) {
+                throw new NotFoundException("Categoría no encontrada");
+            }
+
+            categories.add(category);
+        }
+
+        return categories;
+    }
+
+    private void validateUserFilters(ProductFilterByUserDto filters) {
+        if (filters == null) {
+            return;
+        }
+
+        if (!filters.hasValidPriceRange()) {
+            throw new BadRequestException("El precio máximo debe ser mayor o igual al precio mínimo");
+        }
+
+        if (filters.getCategoryId() != null &&
+                !categoryRepository.existsByIdAndDeletedFalse(filters.getCategoryId())) {
+            throw new NotFoundException("Categoría no encontrada");
+        }
+    }
+
+    private String normalizeName(String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+
+        return name.trim();
+    }
+
+    @Override
+public List<ProductResponseDto> findByCategoryIdWithFilters(
+        Long categoryId,
+        ProductFilterByCategoryDto filters) {
+
+    if (!categoryRepository.existsByIdAndDeletedFalse(categoryId)) {
+        throw new NotFoundException("Categoría no encontrada");
+    }
+
+    if (filters != null && !filters.hasValidPriceRange()) {
+        throw new BadRequestException(
+                "El precio máximo debe ser mayor o igual al precio mínimo");
+    }
+
+    String name = null;
+
+    if (filters != null &&
+            filters.getName() != null &&
+            !filters.getName().isBlank()) {
+        name = filters.getName().trim();
+    }
+
+    return productRepository.findByCategoryIdWithFilters(
+                    categoryId,
+                    name,
+                    filters != null ? filters.getMinPrice() : null,
+                    filters != null ? filters.getMaxPrice() : null
+            )
+            .stream()
+            .map(ProductMapper::toResponse)
+            .toList();
+}
 }

@@ -1,11 +1,14 @@
 package ec.edu.ups.icc.fundamentos01.products.mappers;
 
 import ec.edu.ups.icc.fundamentos01.categories.dtos.CategoryResponseDto;
+import ec.edu.ups.icc.fundamentos01.categories.entities.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
 import ec.edu.ups.icc.fundamentos01.products.models.ProductModel;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UserResponseDto;
+
+import java.util.List;
 
 public class ProductMapper {
 
@@ -45,19 +48,6 @@ public class ProductMapper {
         return entity;
     }
 
-    public static ProductResponseDto toResponse(ProductModel model) {
-        ProductResponseDto dto = new ProductResponseDto();
-
-        dto.setId(model.getId());
-        dto.setName(model.getName());
-        dto.setPrice(model.getPrice());
-        dto.setStock(model.getStock());
-        dto.setCreatedAt(model.getCreatedAt());
-        dto.setUpdatedAt(model.getUpdatedAt());
-
-        return dto;
-    }
-
     public static ProductResponseDto toResponse(ProductEntity entity) {
         ProductResponseDto dto = new ProductResponseDto();
 
@@ -72,15 +62,24 @@ public class ProductMapper {
         ownerDto.setId(entity.getOwner().getId());
         ownerDto.setName(entity.getOwner().getName());
         ownerDto.setEmail(entity.getOwner().getEmail());
-
         dto.setOwner(ownerDto);
 
-        CategoryResponseDto categoryDto = new CategoryResponseDto();
-        categoryDto.setId(entity.getCategory().getId());
-        categoryDto.setName(entity.getCategory().getName());
-        categoryDto.setDescription(entity.getCategory().getDescription());
+        List<CategoryResponseDto> categories = entity.getCategories()
+                .stream()
+                .map(ProductMapper::toCategoryResponse)
+                .toList();
 
-        dto.setCategory(categoryDto);
+        dto.setCategories(categories);
+
+        return dto;
+    }
+
+    private static CategoryResponseDto toCategoryResponse(CategoryEntity entity) {
+        CategoryResponseDto dto = new CategoryResponseDto();
+
+        dto.setId(entity.getId());
+        dto.setName(entity.getName());
+        dto.setDescription(entity.getDescription());
 
         return dto;
     }
