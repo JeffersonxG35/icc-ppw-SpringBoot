@@ -8,6 +8,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
+
+import ec.edu.ups.icc.fundamentos01.core.dtos.PaginationDto;
+
 import java.util.List;
 
 @RestController
@@ -23,6 +28,18 @@ public class ProductsController {
     @GetMapping
     public ResponseEntity<List<ProductResponseDto>> getAll() {
         return ResponseEntity.ok(productService.findAll());
+    }
+
+    @GetMapping("/page")
+    public Page<ProductResponseDto> findAllPage(
+            @Valid @ModelAttribute PaginationDto pagination) {
+        return productService.findAllPage(pagination);
+    }
+
+    @GetMapping("/slice")
+    public Slice<ProductResponseDto> findAllSlice(
+            @Valid @ModelAttribute PaginationDto pagination) {
+        return productService.findAllSlice(pagination);
     }
 
     @GetMapping("/{id}")

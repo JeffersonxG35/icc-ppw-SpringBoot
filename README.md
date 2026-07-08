@@ -47,3 +47,17 @@ El flujo de datos entre la API REST y PostgreSQL se realiza mediante un ORM que 
 
 ### Actualización Parcial de Contraseña
 <img src="assets/12_hashPass.png" width="600">
+
+### Consulta de endpoint de productos con paginación
+<img src="assets/13-consulta-page-result.png" width="600">
+<img src="assets/13-consulta-page.png" width="600">
+<img src="assets/13-consulta1-page.png" width="600">
+
+### Consulta de endpoint de productos con slice
+<img src="assets/14-consulta-slice.png" width="600">
+
+### ¿Cuál es la diferencia entre Page y Slice?
+Page devuelve el total de elementos y páginas porque ejecuta una consulta COUNT, en cambio, slice solo indica si existe una página siguiente y es más ligero
+
+### ¿Por qué la paginación debe aplicarse en el repositorio y no después de traer todos los datos en memoria?
+Porque la base de datos aplica LIMIT y OFFSET antes de enviar los datos. Paginar después de traer todos los registros seguiría consumiendo memoria, tiempo y red innecesariamente.
