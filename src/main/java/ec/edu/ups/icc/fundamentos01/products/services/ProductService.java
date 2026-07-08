@@ -4,27 +4,29 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.*;
 import java.util.List;
 
 public interface ProductService {
-    List<ProductResponseDto> findAll();
+        List<ProductResponseDto> findAll();
 
-    ProductResponseDto findOne(Long id);
+        ProductResponseDto findOne(Long id);
 
-    ProductResponseDto create(CreateProductDto dto);
+        ProductResponseDto create(CreateProductDto dto);
 
-    ProductResponseDto update(Long id, UpdateProductDto dto);
+        ProductResponseDto update(Long id, UpdateProductDto dto);
 
-    ProductResponseDto partialUpdate(Long id, PartialUpdateProductDto dto);
+        ProductResponseDto partialUpdate(Long id, PartialUpdateProductDto dto);
 
-    void delete(Long id);
+        void delete(Long id);
 
-    List<ProductResponseDto> findByUserId(Long userId);
+        List<ProductResponseDto> findByUserId(Long userId);
 
-    List<ProductResponseDto> findByCategoryId(Long categoryId);
+        List<ProductResponseDto> findByCategoryId(Long categoryId);
 
-    List<ProductResponseDto> findByUserIdWithFilters(
-            Long userId,
-            ProductFilterByUserDto filters);
+        List<ProductResponseDto> findByUserIdWithFilters(
+                        Long userId,
+                        ProductFilterByUserDto filters);
 
-    List<ProductResponseDto> findByCategoryIdWithFilters(
-            Long categoryId,
-            ProductFilterByCategoryDto filters);
+        List<ProductResponseDto> findByCategoryIdWithFilters(
+                        Long categoryId,
+                        ProductFilterByCategoryDto filters);
+
+        boolean validateName(String name);
 }

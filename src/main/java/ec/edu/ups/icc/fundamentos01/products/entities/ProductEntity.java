@@ -39,20 +39,32 @@ public class ProductEntity extends BaseEntity {
     private UserEntity owner;
 
     /*
-     * Relación muchos a uno con CategoryEntity.
+     * Relación muchos a muchos con CategoryEntity.
      *
-     * Muchos productos pueden pertenecer a una categoría.
-     * La columna category_id se crea en la tabla products.
+     * Un producto puede pertenecer a varias categorías.
+     * Una categoría puede tener varios productos.
+     *
+     * La relación se almacena en la tabla intermedia
+     * product_categories.
      */
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "product_categories", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
+    @JoinTable(
+            name = "product_categories",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
     private Set<CategoryEntity> categories = new HashSet<>();
 
     public ProductEntity() {
     }
 
-
-    public ProductEntity(String name, Double price, Integer stock, UserEntity owner, Set<CategoryEntity> categories) {
+    public ProductEntity(
+            String name,
+            Double price,
+            Integer stock,
+            UserEntity owner,
+            Set<CategoryEntity> categories
+    ) {
         this.name = name;
         this.price = price;
         this.stock = stock;
@@ -99,5 +111,4 @@ public class ProductEntity extends BaseEntity {
     public void setCategories(Set<CategoryEntity> categories) {
         this.categories = categories;
     }
-
 }
