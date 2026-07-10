@@ -11,9 +11,17 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     List<UserEntity> findByDeletedFalse();
+
     Optional<UserEntity> findByEmail(String email);
+
     Optional<UserEntity> findByIdAndDeletedFalse(Long id);
+
     boolean existsByIdAndDeletedFalse(Long id);
+
     Optional<UserEntity> findByNameAndId(String name, Long id);
+
+    boolean existsByEmail(String email);
+
+    Optional<UserEntity> findByEmailAndDeletedFalse(String email);
 
 }

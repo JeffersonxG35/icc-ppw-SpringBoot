@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import ec.edu.ups.icc.fundamentos01.core.dtos.PaginationDto;
 
@@ -26,6 +27,7 @@ public class ProductsController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ProductResponseDto>> getAll() {
         return ResponseEntity.ok(productService.findAll());
     }
