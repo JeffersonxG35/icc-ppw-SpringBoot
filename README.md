@@ -61,3 +61,15 @@ Page devuelve el total de elementos y páginas porque ejecuta una consulta COUNT
 
 ### ¿Por qué la paginación debe aplicarse en el repositorio y no después de traer todos los datos en memoria?
 Porque la base de datos aplica LIMIT y OFFSET antes de enviar los datos. Paginar después de traer todos los registros seguiría consumiendo memoria, tiempo y red innecesariamente.
+
+### Registro exitoso
+<img src="assets/15-registro.png" width="600">
+
+### Login exitoso
+<img src="assets/16-login.png" width="600">
+
+### Endpoint protegido sin token
+<img src="assets/17-endpointSinToken.png" width="600">
+
+### Endpoint protegido con token
+<img src="assets/18-endpointConToken.png" width="600">
