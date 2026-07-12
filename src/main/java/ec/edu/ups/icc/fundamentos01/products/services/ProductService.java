@@ -48,6 +48,11 @@ public interface ProductService {
 
     List<ProductResponseDto> findByUserId(Long userId);
 
+    Slice<ProductResponseDto> findByUserIdSlice(
+        Long userId,
+        PaginationDto pagination
+    );
+
     List<ProductResponseDto> findByCategoryId(Long categoryId);
 
     List<ProductResponseDto> findByUserIdWithFilters(

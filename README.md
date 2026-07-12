@@ -73,3 +73,28 @@ Porque la base de datos aplica LIMIT y OFFSET antes de enviar los datos. Paginar
 
 ### Endpoint protegido con token
 <img src="assets/18-endpointConToken.png" width="600">
+
+### Usuario autenticado
+<img src="assets/19-usuario-autenticado.png" width="600">
+
+### Usuario no autenticado
+<img src="assets/20-acceso-denegado.png" width="600">
+
+### Usuario autenticado como ADMIN
+<img src="assets/21-acceso-permitidoADMIN.png" width="600">
+
+### Creación de producto con usuario autenticado
+<img src="assets/producto-usuario-autenticado.png" width="600">
+
+###  Bloqueo de actualización de producto ajeno
+<img src="assets/intento-modificar.png" width="600">
+
+### Bloqueo de eliminación de producto ajeno
+<img src="assets/intento-eliminar.png" width="600">
+
+### ADMIN modificando producto ajeno
+<img src="assets/producto-modificado-ADMIN.png" width="600">
+
+### Productos del usuario con ID
+<img src="assets/slice.png" width="600">
+<img src="assets/slice2.png" width="600">

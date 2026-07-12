@@ -36,605 +36,522 @@ import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
 @Service
 public class ProductServiceImpl implements ProductService {
 
-    private final ProductRepository productRepository;
-    private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
+        private final ProductRepository productRepository;
+        private final UserRepository userRepository;
+        private final CategoryRepository categoryRepository;
 
-    public ProductServiceImpl(
-            ProductRepository productRepository,
-            UserRepository userRepository,
-            CategoryRepository categoryRepository
-    ) {
-        this.productRepository = productRepository;
-        this.userRepository = userRepository;
-        this.categoryRepository = categoryRepository;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponseDto> findAll() {
-        List<ProductEntity> list =
-                productRepository.findByDeletedFalse();
-
-        return ProductMapper.toResponseList(list);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ProductResponseDto> findAllPage(
-            PaginationDto pagination
-    ) {
-        Pageable pageable = createPageable(pagination);
-
-        return productRepository
-                .findActivePage(pageable)
-                .map(ProductMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Slice<ProductResponseDto> findAllSlice(
-            PaginationDto pagination
-    ) {
-        Pageable pageable = createPageable(pagination);
-
-        return productRepository
-                .findActiveSlice(pageable)
-                .map(ProductMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ProductResponseDto findOne(Long id) {
-        ProductEntity entity =
-                findActiveProductOrThrow(id);
-
-        return ProductMapper.toResponse(entity);
-    }
-
-    @Override
-    @Transactional
-    public ProductResponseDto create(
-            CreateProductDto dto,
-            UserDetailsImpl currentUser
-    ) {
-        UserEntity owner =
-                findCurrentUserEntity(currentUser);
-
-        Set<CategoryEntity> categories =
-                validateAndGetCategories(
-                        dto.getCategoryIds()
-                );
-
-        if (productRepository
-                .findByNameIgnoreCaseAndDeletedFalse(
-                        dto.getName()
-                )
-                .isPresent()) {
-            throw new ConflictException(
-                    "Product name already registered"
-            );
+        public ProductServiceImpl(
+                        ProductRepository productRepository,
+                        UserRepository userRepository,
+                        CategoryRepository categoryRepository) {
+                this.productRepository = productRepository;
+                this.userRepository = userRepository;
+                this.categoryRepository = categoryRepository;
         }
 
-        ProductEntity entity = new ProductEntity();
+        @Override
+        @Transactional(readOnly = true)
+        public List<ProductResponseDto> findAll() {
+                List<ProductEntity> list = productRepository.findByDeletedFalse();
 
-        entity.setName(dto.getName());
-        entity.setPrice(dto.getPrice());
-        entity.setStock(dto.getStock());
-        entity.setOwner(owner);
-        entity.setCategories(categories);
+                return ProductMapper.toResponseList(list);
+        }
 
-        ProductEntity savedEntity =
+        @Override
+        @Transactional(readOnly = true)
+        public Page<ProductResponseDto> findAllPage(
+                        PaginationDto pagination) {
+                Pageable pageable = createPageable(pagination);
+
+                return productRepository
+                                .findActivePage(pageable)
+                                .map(ProductMapper::toResponse);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public Slice<ProductResponseDto> findAllSlice(
+                        PaginationDto pagination) {
+                Pageable pageable = createPageable(pagination);
+
+                return productRepository
+                                .findActiveSlice(pageable)
+                                .map(ProductMapper::toResponse);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public ProductResponseDto findOne(Long id) {
+                ProductEntity entity = findActiveProductOrThrow(id);
+
+                return ProductMapper.toResponse(entity);
+        }
+
+        @Override
+        @Transactional
+        public ProductResponseDto create(
+                        CreateProductDto dto,
+                        UserDetailsImpl currentUser) {
+                UserEntity owner = findCurrentUserEntity(currentUser);
+
+                Set<CategoryEntity> categories = validateAndGetCategories(
+                                dto.getCategoryIds());
+
+                if (productRepository
+                                .findByNameIgnoreCaseAndDeletedFalse(
+                                                dto.getName())
+                                .isPresent()) {
+                        throw new ConflictException(
+                                        "Product name already registered");
+                }
+
+                ProductEntity entity = new ProductEntity();
+
+                entity.setName(dto.getName());
+                entity.setPrice(dto.getPrice());
+                entity.setStock(dto.getStock());
+                entity.setOwner(owner);
+                entity.setCategories(categories);
+
+                ProductEntity savedEntity = productRepository.save(entity);
+
+                return ProductMapper.toResponse(savedEntity);
+        }
+
+        @Override
+        @Transactional
+        public ProductResponseDto update(
+                        Long id,
+                        UpdateProductDto dto,
+                        UserDetailsImpl currentUser) {
+                ProductEntity entity = findActiveProductOrThrow(id);
+
+                validateOwnership(entity, currentUser);
+
+                Set<CategoryEntity> categories = validateAndGetCategories(
+                                dto.getCategoryIds());
+
+                entity.setName(dto.getName());
+                entity.setPrice(dto.getPrice());
+                entity.setStock(dto.getStock());
+                entity.setCategories(categories);
+
+                ProductEntity savedEntity = productRepository.save(entity);
+
+                return ProductMapper.toResponse(savedEntity);
+        }
+
+        @Override
+        @Transactional
+        public ProductResponseDto partialUpdate(
+                        Long id,
+                        PartialUpdateProductDto dto,
+                        UserDetailsImpl currentUser) {
+                ProductEntity entity = findActiveProductOrThrow(id);
+
+                validateOwnership(entity, currentUser);
+
+                if (dto.getName() != null) {
+                        entity.setName(dto.getName());
+                }
+
+                if (dto.getPrice() != null) {
+                        entity.setPrice(dto.getPrice());
+                }
+
+                if (dto.getStock() != null) {
+                        entity.setStock(dto.getStock());
+                }
+
+                if (dto.getCategoryIds() != null) {
+                        Set<CategoryEntity> categories = validateAndGetCategories(
+                                        dto.getCategoryIds());
+
+                        entity.setCategories(categories);
+                }
+
+                ProductEntity savedEntity = productRepository.save(entity);
+
+                return ProductMapper.toResponse(savedEntity);
+        }
+
+        @Override
+        @Transactional
+        public void delete(
+                        Long id,
+                        UserDetailsImpl currentUser) {
+                ProductEntity entity = findActiveProductOrThrow(id);
+
+                validateOwnership(entity, currentUser);
+
+                entity.setDeleted(true);
+
                 productRepository.save(entity);
-
-        return ProductMapper.toResponse(savedEntity);
-    }
-
-    @Override
-    @Transactional
-    public ProductResponseDto update(
-            Long id,
-            UpdateProductDto dto,
-            UserDetailsImpl currentUser
-    ) {
-        ProductEntity entity =
-                findActiveProductOrThrow(id);
-
-        validateOwnership(entity, currentUser);
-
-        Set<CategoryEntity> categories =
-                validateAndGetCategories(
-                        dto.getCategoryIds()
-                );
-
-        entity.setName(dto.getName());
-        entity.setPrice(dto.getPrice());
-        entity.setStock(dto.getStock());
-        entity.setCategories(categories);
-
-        ProductEntity savedEntity =
-                productRepository.save(entity);
-
-        return ProductMapper.toResponse(savedEntity);
-    }
-
-    @Override
-    @Transactional
-    public ProductResponseDto partialUpdate(
-            Long id,
-            PartialUpdateProductDto dto,
-            UserDetailsImpl currentUser
-    ) {
-        ProductEntity entity =
-                findActiveProductOrThrow(id);
-
-        validateOwnership(entity, currentUser);
-
-        if (dto.getName() != null) {
-            entity.setName(dto.getName());
         }
 
-        if (dto.getPrice() != null) {
-            entity.setPrice(dto.getPrice());
+        @Override
+        @Transactional(readOnly = true)
+        public List<ProductResponseDto> findByUserId(
+                        Long userId) {
+                if (!userRepository
+                                .existsByIdAndDeletedFalse(userId)) {
+                        throw new NotFoundException(
+                                        "User not found");
+                }
+
+                List<ProductEntity> list = productRepository
+                                .findByOwner_IdAndDeletedFalse(
+                                                userId);
+
+                return ProductMapper.toResponseList(list);
         }
 
-        if (dto.getStock() != null) {
-            entity.setStock(dto.getStock());
+        @Override
+        @Transactional(readOnly = true)
+        public Slice<ProductResponseDto> findByUserIdSlice(
+                        Long userId,
+                        PaginationDto pagination) {
+                if (!userRepository.existsByIdAndDeletedFalse(userId)) {
+                        throw new NotFoundException("User not found");
+                }
+
+                Pageable pageable = createPageable(pagination);
+
+                return productRepository
+                                .findByOwner_IdAndDeletedFalse(
+                                                userId,
+                                                pageable)
+                                .map(ProductMapper::toResponse);
         }
 
-        if (dto.getCategoryIds() != null) {
-            Set<CategoryEntity> categories =
-                    validateAndGetCategories(
-                            dto.getCategoryIds()
-                    );
+        @Override
+        @Transactional(readOnly = true)
+        public List<ProductResponseDto> findByCategoryId(
+                        Long categoryId) {
+                if (!categoryRepository
+                                .existsByIdAndDeletedFalse(
+                                                categoryId)) {
+                        throw new NotFoundException(
+                                        "Category not found");
+                }
 
-            entity.setCategories(categories);
+                List<ProductEntity> list = productRepository
+                                .findByCategoryId(categoryId);
+
+                return ProductMapper.toResponseList(list);
         }
 
-        ProductEntity savedEntity =
-                productRepository.save(entity);
+        @Override
+        @Transactional(readOnly = true)
+        public List<ProductResponseDto> findByUserIdWithFilters(
+                        Long userId,
+                        ProductFilterByUserDto filters) {
+                if (!userRepository
+                                .existsByIdAndDeletedFalse(userId)) {
+                        throw new NotFoundException(
+                                        "User not found");
+                }
 
-        return ProductMapper.toResponse(savedEntity);
-    }
+                validateUserFilters(filters);
 
-    @Override
-    @Transactional
-    public void delete(
-            Long id,
-            UserDetailsImpl currentUser
-    ) {
-        ProductEntity entity =
-                findActiveProductOrThrow(id);
+                String name = normalizeName(filters.getName());
 
-        validateOwnership(entity, currentUser);
+                List<ProductEntity> list = productRepository
+                                .findByOwnerIdWithFilters(
+                                                userId,
+                                                name,
+                                                filters.getMinPrice(),
+                                                filters.getMaxPrice(),
+                                                filters.getCategoryId());
 
-        entity.setDeleted(true);
-
-        productRepository.save(entity);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponseDto> findByUserId(
-            Long userId
-    ) {
-        if (!userRepository
-                .existsByIdAndDeletedFalse(userId)) {
-            throw new NotFoundException(
-                    "User not found"
-            );
+                return ProductMapper.toResponseList(list);
         }
 
-        List<ProductEntity> list =
-                productRepository
-                        .findByOwner_IdAndDeletedFalse(
-                                userId
-                        );
+        @Override
+        @Transactional(readOnly = true)
+        public List<ProductResponseDto> findByCategoryIdWithFilters(
+                        Long categoryId,
+                        ProductFilterByCategoryDto filters) {
+                if (!categoryRepository
+                                .existsByIdAndDeletedFalse(
+                                                categoryId)) {
+                        throw new NotFoundException(
+                                        "Category not found");
+                }
 
-        return ProductMapper.toResponseList(list);
-    }
+                validateCategoryFilters(filters);
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponseDto> findByCategoryId(
-            Long categoryId
-    ) {
-        if (!categoryRepository
-                .existsByIdAndDeletedFalse(
-                        categoryId
-                )) {
-            throw new NotFoundException(
-                    "Category not found"
-            );
+                String name = normalizeName(filters.getName());
+
+                List<ProductEntity> list = productRepository
+                                .findByCategoryIdWithFilters(
+                                                categoryId,
+                                                name,
+                                                filters.getMinPrice(),
+                                                filters.getMaxPrice(),
+                                                filters.getUserId());
+
+                return ProductMapper.toResponseList(list);
         }
 
-        List<ProductEntity> list =
-                productRepository
-                        .findByCategoryId(categoryId);
+        @Override
+        @Transactional(readOnly = true)
+        public Page<ProductResponseDto> findByCategoryIdWithFiltersPage(
+                        Long categoryId,
+                        ProductFilterByCategoryDto filters,
+                        PaginationDto pagination) {
+                if (!categoryRepository
+                                .existsByIdAndDeletedFalse(
+                                                categoryId)) {
+                        throw new NotFoundException(
+                                        "Category not found");
+                }
 
-        return ProductMapper.toResponseList(list);
-    }
+                validateCategoryFilters(filters);
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponseDto> findByUserIdWithFilters(
-            Long userId,
-            ProductFilterByUserDto filters
-    ) {
-        if (!userRepository
-                .existsByIdAndDeletedFalse(userId)) {
-            throw new NotFoundException(
-                    "User not found"
-            );
+                String name = normalizeName(filters.getName());
+
+                Pageable pageable = createPageable(pagination);
+
+                return productRepository
+                                .findByCategoryIdWithFiltersPage(
+                                                categoryId,
+                                                name,
+                                                filters.getMinPrice(),
+                                                filters.getMaxPrice(),
+                                                filters.getUserId(),
+                                                pageable)
+                                .map(ProductMapper::toResponse);
         }
 
-        validateUserFilters(filters);
+        @Override
+        @Transactional(readOnly = true)
+        public Slice<ProductResponseDto> findByCategoryIdWithFiltersSlice(
+                        Long categoryId,
+                        ProductFilterByCategoryDto filters,
+                        PaginationDto pagination) {
+                if (!categoryRepository
+                                .existsByIdAndDeletedFalse(
+                                                categoryId)) {
+                        throw new NotFoundException(
+                                        "Category not found");
+                }
 
-        String name =
-                normalizeName(filters.getName());
+                validateCategoryFilters(filters);
 
-        List<ProductEntity> list =
-                productRepository
-                        .findByOwnerIdWithFilters(
-                                userId,
-                                name,
-                                filters.getMinPrice(),
-                                filters.getMaxPrice(),
-                                filters.getCategoryId()
-                        );
+                String name = normalizeName(filters.getName());
 
-        return ProductMapper.toResponseList(list);
-    }
+                Pageable pageable = createPageable(pagination);
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponseDto> findByCategoryIdWithFilters(
-            Long categoryId,
-            ProductFilterByCategoryDto filters
-    ) {
-        if (!categoryRepository
-                .existsByIdAndDeletedFalse(
-                        categoryId
-                )) {
-            throw new NotFoundException(
-                    "Category not found"
-            );
+                return productRepository
+                                .findByCategoryIdWithFiltersSlice(
+                                                categoryId,
+                                                name,
+                                                filters.getMinPrice(),
+                                                filters.getMaxPrice(),
+                                                filters.getUserId(),
+                                                pageable)
+                                .map(ProductMapper::toResponse);
         }
 
-        validateCategoryFilters(filters);
-
-        String name =
-                normalizeName(filters.getName());
-
-        List<ProductEntity> list =
-                productRepository
-                        .findByCategoryIdWithFilters(
-                                categoryId,
-                                name,
-                                filters.getMinPrice(),
-                                filters.getMaxPrice(),
-                                filters.getUserId()
-                        );
-
-        return ProductMapper.toResponseList(list);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ProductResponseDto> findByCategoryIdWithFiltersPage(
-            Long categoryId,
-            ProductFilterByCategoryDto filters,
-            PaginationDto pagination
-    ) {
-        if (!categoryRepository
-                .existsByIdAndDeletedFalse(
-                        categoryId
-                )) {
-            throw new NotFoundException(
-                    "Category not found"
-            );
+        @Override
+        @Transactional(readOnly = true)
+        public boolean validateName(String name) {
+                return productRepository
+                                .findByNameIgnoreCaseAndDeletedFalse(name)
+                                .isPresent();
         }
 
-        validateCategoryFilters(filters);
-
-        String name =
-                normalizeName(filters.getName());
-
-        Pageable pageable =
-                createPageable(pagination);
-
-        return productRepository
-                .findByCategoryIdWithFiltersPage(
-                        categoryId,
-                        name,
-                        filters.getMinPrice(),
-                        filters.getMaxPrice(),
-                        filters.getUserId(),
-                        pageable
-                )
-                .map(ProductMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Slice<ProductResponseDto> findByCategoryIdWithFiltersSlice(
-            Long categoryId,
-            ProductFilterByCategoryDto filters,
-            PaginationDto pagination
-    ) {
-        if (!categoryRepository
-                .existsByIdAndDeletedFalse(
-                        categoryId
-                )) {
-            throw new NotFoundException(
-                    "Category not found"
-            );
+        private ProductEntity findActiveProductOrThrow(
+                        Long id) {
+                return productRepository
+                                .findByIdAndDeletedFalse(id)
+                                .orElseThrow(() -> new NotFoundException(
+                                                "Product not found"));
         }
 
-        validateCategoryFilters(filters);
+        private UserEntity findCurrentUserEntity(
+                        UserDetailsImpl currentUser) {
+                if (currentUser == null) {
+                        throw new AccessDeniedException(
+                                        "Usuario no autenticado");
+                }
 
-        String name =
-                normalizeName(filters.getName());
-
-        Pageable pageable =
-                createPageable(pagination);
-
-        return productRepository
-                .findByCategoryIdWithFiltersSlice(
-                        categoryId,
-                        name,
-                        filters.getMinPrice(),
-                        filters.getMaxPrice(),
-                        filters.getUserId(),
-                        pageable
-                )
-                .map(ProductMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean validateName(String name) {
-        return productRepository
-                .findByNameIgnoreCaseAndDeletedFalse(name)
-                .isPresent();
-    }
-
-    private ProductEntity findActiveProductOrThrow(
-            Long id
-    ) {
-        return productRepository
-                .findByIdAndDeletedFalse(id)
-                .orElseThrow(() ->
-                        new NotFoundException(
-                                "Product not found"
-                        )
-                );
-    }
-
-    private UserEntity findCurrentUserEntity(
-            UserDetailsImpl currentUser
-    ) {
-        if (currentUser == null) {
-            throw new AccessDeniedException(
-                    "Usuario no autenticado"
-            );
+                return userRepository
+                                .findByIdAndDeletedFalse(
+                                                currentUser.getId())
+                                .orElseThrow(() -> new AccessDeniedException(
+                                                "Usuario no autorizado"));
         }
 
-        return userRepository
-                .findByIdAndDeletedFalse(
-                        currentUser.getId()
-                )
-                .orElseThrow(() ->
-                        new AccessDeniedException(
-                                "Usuario no autorizado"
-                        )
-                );
-    }
+        private void validateOwnership(
+                        ProductEntity product,
+                        UserDetailsImpl currentUser) {
+                if (currentUser == null) {
+                        throw new AccessDeniedException(
+                                        "Usuario no autenticado");
+                }
 
-    private void validateOwnership(
-            ProductEntity product,
-            UserDetailsImpl currentUser
-    ) {
-        if (currentUser == null) {
-            throw new AccessDeniedException(
-                    "Usuario no autenticado"
-            );
+                if (hasRole(
+                                currentUser,
+                                "ROLE_ADMIN")) {
+                        return;
+                }
+
+                if (product.getOwner() == null
+                                || product.getOwner().getId() == null) {
+                        throw new AccessDeniedException(
+                                        "El producto no tiene propietario válido");
+                }
+
+                if (!product.getOwner()
+                                .getId()
+                                .equals(currentUser.getId())) {
+                        throw new AccessDeniedException(
+                                        "No puedes modificar productos ajenos");
+                }
         }
 
-        if (hasRole(
-                currentUser,
-                "ROLE_ADMIN"
-        )) {
-            return;
+        private boolean hasRole(
+                        UserDetailsImpl user,
+                        String role) {
+                return user.getAuthorities()
+                                .stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .anyMatch(authority -> authority.equals(role));
         }
 
-        if (product.getOwner() == null
-                || product.getOwner().getId() == null) {
-            throw new AccessDeniedException(
-                    "El producto no tiene propietario válido"
-            );
+        private Pageable createPageable(
+                        PaginationDto pagination) {
+                String sortBy = normalizeSortBy(
+                                pagination.getSortBy());
+
+                Sort.Direction direction = normalizeDirection(
+                                pagination.getDirection());
+
+                Sort sort = Sort.by(direction, sortBy);
+
+                return PageRequest.of(
+                                pagination.getPage(),
+                                pagination.getSize(),
+                                sort);
         }
 
-        if (!product.getOwner()
-                .getId()
-                .equals(currentUser.getId())) {
-            throw new AccessDeniedException(
-                    "No puedes modificar productos ajenos"
-            );
-        }
-    }
+        private String normalizeSortBy(
+                        String sortBy) {
+                if (sortBy == null || sortBy.isBlank()) {
+                        return "id";
+                }
 
-    private boolean hasRole(
-            UserDetailsImpl user,
-            String role
-    ) {
-        return user.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(authority ->
-                        authority.equals(role)
-                );
-    }
+                Set<String> allowedFields = Set.of(
+                                "id",
+                                "name",
+                                "price",
+                                "stock",
+                                "createdAt",
+                                "updatedAt");
 
-    private Pageable createPageable(
-            PaginationDto pagination
-    ) {
-        String sortBy =
-                normalizeSortBy(
-                        pagination.getSortBy()
-                );
+                if (!allowedFields.contains(sortBy)) {
+                        throw new BadRequestException(
+                                        "Campo de ordenamiento no permitido: "
+                                                        + sortBy);
+                }
 
-        Sort.Direction direction =
-                normalizeDirection(
-                        pagination.getDirection()
-                );
-
-        Sort sort =
-                Sort.by(direction, sortBy);
-
-        return PageRequest.of(
-                pagination.getPage(),
-                pagination.getSize(),
-                sort
-        );
-    }
-
-    private String normalizeSortBy(
-            String sortBy
-    ) {
-        if (sortBy == null || sortBy.isBlank()) {
-            return "id";
+                return sortBy;
         }
 
-        Set<String> allowedFields = Set.of(
-                "id",
-                "name",
-                "price",
-                "stock",
-                "createdAt",
-                "updatedAt"
-        );
+        private Sort.Direction normalizeDirection(
+                        String direction) {
+                if (direction == null
+                                || direction.isBlank()) {
+                        return Sort.Direction.ASC;
+                }
 
-        if (!allowedFields.contains(sortBy)) {
-            throw new BadRequestException(
-                    "Campo de ordenamiento no permitido: "
-                            + sortBy
-            );
+                if (direction.equalsIgnoreCase("asc")) {
+                        return Sort.Direction.ASC;
+                }
+
+                if (direction.equalsIgnoreCase("desc")) {
+                        return Sort.Direction.DESC;
+                }
+
+                throw new BadRequestException(
+                                "Dirección de ordenamiento no válida: "
+                                                + direction);
         }
 
-        return sortBy;
-    }
+        private void validateUserFilters(
+                        ProductFilterByUserDto filters) {
+                if (filters == null) {
+                        return;
+                }
 
-    private Sort.Direction normalizeDirection(
-            String direction
-    ) {
-        if (direction == null
-                || direction.isBlank()) {
-            return Sort.Direction.ASC;
+                if (!filters.hasValidPriceRange()) {
+                        throw new BadRequestException(
+                                        "El precio máximo debe ser mayor o igual al precio mínimo");
+                }
+
+                if (filters.getCategoryId() != null
+                                && !categoryRepository
+                                                .existsByIdAndDeletedFalse(
+                                                                filters.getCategoryId())) {
+                        throw new NotFoundException(
+                                        "Category not found");
+                }
         }
 
-        if (direction.equalsIgnoreCase("asc")) {
-            return Sort.Direction.ASC;
+        private void validateCategoryFilters(
+                        ProductFilterByCategoryDto filters) {
+                if (filters == null) {
+                        return;
+                }
+
+                if (!filters.hasValidPriceRange()) {
+                        throw new BadRequestException(
+                                        "El precio máximo debe ser mayor o igual al precio mínimo");
+                }
+
+                if (filters.getUserId() != null
+                                && !userRepository
+                                                .existsByIdAndDeletedFalse(
+                                                                filters.getUserId())) {
+                        throw new NotFoundException(
+                                        "User not found");
+                }
         }
 
-        if (direction.equalsIgnoreCase("desc")) {
-            return Sort.Direction.DESC;
+        private Set<CategoryEntity> validateAndGetCategories(
+                        Set<Long> categoryIds) {
+                if (categoryIds == null
+                                || categoryIds.isEmpty()) {
+                        throw new BadRequestException(
+                                        "Debe seleccionar al menos una categoría");
+                }
+
+                Set<CategoryEntity> categories = new HashSet<>();
+
+                for (Long categoryId : categoryIds) {
+                        CategoryEntity category = categoryRepository
+                                        .findById(categoryId)
+                                        .orElseThrow(() -> new NotFoundException(
+                                                        "Category not found"));
+
+                        if (category.isDeleted()) {
+                                throw new NotFoundException(
+                                                "Category not found");
+                        }
+
+                        categories.add(category);
+                }
+
+                return categories;
         }
 
-        throw new BadRequestException(
-                "Dirección de ordenamiento no válida: "
-                        + direction
-        );
-    }
+        private String normalizeName(String name) {
+                if (name == null || name.isBlank()) {
+                        return null;
+                }
 
-    private void validateUserFilters(
-            ProductFilterByUserDto filters
-    ) {
-        if (filters == null) {
-            return;
+                return name.trim();
         }
-
-        if (!filters.hasValidPriceRange()) {
-            throw new BadRequestException(
-                    "El precio máximo debe ser mayor o igual al precio mínimo"
-            );
-        }
-
-        if (filters.getCategoryId() != null
-                && !categoryRepository
-                .existsByIdAndDeletedFalse(
-                        filters.getCategoryId()
-                )) {
-            throw new NotFoundException(
-                    "Category not found"
-            );
-        }
-    }
-
-    private void validateCategoryFilters(
-            ProductFilterByCategoryDto filters
-    ) {
-        if (filters == null) {
-            return;
-        }
-
-        if (!filters.hasValidPriceRange()) {
-            throw new BadRequestException(
-                    "El precio máximo debe ser mayor o igual al precio mínimo"
-            );
-        }
-
-        if (filters.getUserId() != null
-                && !userRepository
-                .existsByIdAndDeletedFalse(
-                        filters.getUserId()
-                )) {
-            throw new NotFoundException(
-                    "User not found"
-            );
-        }
-    }
-
-    private Set<CategoryEntity> validateAndGetCategories(
-            Set<Long> categoryIds
-    ) {
-        if (categoryIds == null
-                || categoryIds.isEmpty()) {
-            throw new BadRequestException(
-                    "Debe seleccionar al menos una categoría"
-            );
-        }
-
-        Set<CategoryEntity> categories =
-                new HashSet<>();
-
-        for (Long categoryId : categoryIds) {
-            CategoryEntity category =
-                    categoryRepository
-                            .findById(categoryId)
-                            .orElseThrow(() ->
-                                    new NotFoundException(
-                                            "Category not found"
-                                    )
-                            );
-
-            if (category.isDeleted()) {
-                throw new NotFoundException(
-                        "Category not found"
-                );
-            }
-
-            categories.add(category);
-        }
-
-        return categories;
-    }
-
-    private String normalizeName(String name) {
-        if (name == null || name.isBlank()) {
-            return null;
-        }
-
-        return name.trim();
-    }
 }

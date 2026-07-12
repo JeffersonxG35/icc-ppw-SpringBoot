@@ -135,6 +135,17 @@ public class ProductsController {
         );
     }
 
+    @GetMapping("/user/{userId}/slice")
+    public Slice<ProductResponseDto> findByUserIdSlice(
+        @PathVariable Long userId,
+        @Valid @ModelAttribute PaginationDto pagination
+    ) {
+    return productService.findByUserIdSlice(
+            userId,
+            pagination
+        );
+   }
+
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<List<ProductResponseDto>> findByCategoryId(
             @PathVariable Long categoryId

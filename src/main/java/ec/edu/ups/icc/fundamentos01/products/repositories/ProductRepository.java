@@ -16,192 +16,185 @@ import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
-    Optional<ProductEntity> findByNameIgnoreCaseAndDeletedFalse(String name);
+        Optional<ProductEntity> findByNameIgnoreCaseAndDeletedFalse(String name);
 
-    List<ProductEntity> findByDeletedFalse();
+        List<ProductEntity> findByDeletedFalse();
 
-    Optional<ProductEntity> findByIdAndDeletedFalse(Long id);
+        Optional<ProductEntity> findByIdAndDeletedFalse(Long id);
 
-    List<ProductEntity> findByOwner_IdAndDeletedFalse(Long ownerId);
+        List<ProductEntity> findByOwner_IdAndDeletedFalse(Long ownerId);
 
-    /*
-     * Consulta general de productos activos usando Page.
-     */
-    @Query(
-            value = """
-                    SELECT p
-                    FROM ProductEntity p
-                    WHERE p.deleted = false
-                    """,
-            countQuery = """
-                    SELECT COUNT(p)
-                    FROM ProductEntity p
-                    WHERE p.deleted = false
-                    """
-    )
-    Page<ProductEntity> findActivePage(Pageable pageable);
+        Slice<ProductEntity> findByOwner_IdAndDeletedFalse(
+                        Long ownerId,
+                        Pageable pageable);
 
-    /*
-     * Consulta general de productos activos usando Slice.
-     */
-    @Query("""
-            SELECT p
-            FROM ProductEntity p
-            WHERE p.deleted = false
-            """)
-    Slice<ProductEntity> findActiveSlice(Pageable pageable);
+        /*
+         * Consulta general de productos activos usando Page.
+         */
+        @Query(value = """
+                        SELECT p
+                        FROM ProductEntity p
+                        WHERE p.deleted = false
+                        """, countQuery = """
+                        SELECT COUNT(p)
+                        FROM ProductEntity p
+                        WHERE p.deleted = false
+                        """)
+        Page<ProductEntity> findActivePage(Pageable pageable);
 
-    /*
-     * Consulta productos activos asociados a una categoría.
-     */
-    @Query("""
-            SELECT DISTINCT p
-            FROM ProductEntity p
-            JOIN p.categories c
-            WHERE p.deleted = false
-              AND c.id = :categoryId
-              AND c.deleted = false
-              AND p.owner.deleted = false
-            """)
-    List<ProductEntity> findByCategoryId(
-            @Param("categoryId") Long categoryId
-    );
+        /*
+         * Consulta general de productos activos usando Slice.
+         */
+        @Query("""
+                        SELECT p
+                        FROM ProductEntity p
+                        WHERE p.deleted = false
+                        """)
+        Slice<ProductEntity> findActiveSlice(Pageable pageable);
 
-    /*
-     * Consulta productos activos de un usuario aplicando filtros.
-     */
-    @Query("""
-            SELECT DISTINCT p
-            FROM ProductEntity p
-            LEFT JOIN p.categories c
-            WHERE p.deleted = false
-              AND p.owner.id = :userId
-              AND p.owner.deleted = false
-              AND (
-                    COALESCE(:name, '') = ''
-                    OR LOWER(p.name) LIKE LOWER(
-                        CONCAT('%', COALESCE(:name, ''), '%')
-                    )
-              )
-              AND (:minPrice IS NULL OR p.price >= :minPrice)
-              AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-              AND (:categoryId IS NULL OR c.id = :categoryId)
-              AND (:categoryId IS NULL OR c.deleted = false)
-            """)
-    List<ProductEntity> findByOwnerIdWithFilters(
-            @Param("userId") Long userId,
-            @Param("name") String name,
-            @Param("minPrice") Double minPrice,
-            @Param("maxPrice") Double maxPrice,
-            @Param("categoryId") Long categoryId
-    );
+        /*
+         * Consulta productos activos asociados a una categoría.
+         */
+        @Query("""
+                        SELECT DISTINCT p
+                        FROM ProductEntity p
+                        JOIN p.categories c
+                        WHERE p.deleted = false
+                          AND c.id = :categoryId
+                          AND c.deleted = false
+                          AND p.owner.deleted = false
+                        """)
+        List<ProductEntity> findByCategoryId(
+                        @Param("categoryId") Long categoryId);
 
-    /*
-     * Consulta normal de productos de una categoría aplicando filtros.
-     */
-    @Query("""
-            SELECT DISTINCT p
-            FROM ProductEntity p
-            JOIN p.categories c
-            WHERE p.deleted = false
-              AND c.id = :categoryId
-              AND c.deleted = false
-              AND p.owner.deleted = false
-              AND (
-                    COALESCE(:name, '') = ''
-                    OR LOWER(p.name) LIKE LOWER(
-                        CONCAT('%', COALESCE(:name, ''), '%')
-                    )
-              )
-              AND (:minPrice IS NULL OR p.price >= :minPrice)
-              AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-              AND (:userId IS NULL OR p.owner.id = :userId)
-            """)
-    List<ProductEntity> findByCategoryIdWithFilters(
-            @Param("categoryId") Long categoryId,
-            @Param("name") String name,
-            @Param("minPrice") Double minPrice,
-            @Param("maxPrice") Double maxPrice,
-            @Param("userId") Long userId
-    );
+        /*
+         * Consulta productos activos de un usuario aplicando filtros.
+         */
+        @Query("""
+                        SELECT DISTINCT p
+                        FROM ProductEntity p
+                        LEFT JOIN p.categories c
+                        WHERE p.deleted = false
+                          AND p.owner.id = :userId
+                          AND p.owner.deleted = false
+                          AND (
+                                COALESCE(:name, '') = ''
+                                OR LOWER(p.name) LIKE LOWER(
+                                    CONCAT('%', COALESCE(:name, ''), '%')
+                                )
+                          )
+                          AND (:minPrice IS NULL OR p.price >= :minPrice)
+                          AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+                          AND (:categoryId IS NULL OR c.id = :categoryId)
+                          AND (:categoryId IS NULL OR c.deleted = false)
+                        """)
+        List<ProductEntity> findByOwnerIdWithFilters(
+                        @Param("userId") Long userId,
+                        @Param("name") String name,
+                        @Param("minPrice") Double minPrice,
+                        @Param("maxPrice") Double maxPrice,
+                        @Param("categoryId") Long categoryId);
 
-    /*
-     * Consulta paginada con Page para productos de una categoría.
-     */
-    @Query(
-            value = """
-                    SELECT DISTINCT p
-                    FROM ProductEntity p
-                    JOIN p.categories c
-                    WHERE p.deleted = false
-                      AND c.id = :categoryId
-                      AND c.deleted = false
-                      AND p.owner.deleted = false
-                      AND (
-                            COALESCE(:name, '') = ''
-                            OR LOWER(p.name) LIKE LOWER(
-                                CONCAT('%', COALESCE(:name, ''), '%')
-                            )
-                      )
-                      AND (:minPrice IS NULL OR p.price >= :minPrice)
-                      AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-                      AND (:userId IS NULL OR p.owner.id = :userId)
-                    """,
-            countQuery = """
-                    SELECT COUNT(DISTINCT p)
-                    FROM ProductEntity p
-                    JOIN p.categories c
-                    WHERE p.deleted = false
-                      AND c.id = :categoryId
-                      AND c.deleted = false
-                      AND p.owner.deleted = false
-                      AND (
-                            COALESCE(:name, '') = ''
-                            OR LOWER(p.name) LIKE LOWER(
-                                CONCAT('%', COALESCE(:name, ''), '%')
-                            )
-                      )
-                      AND (:minPrice IS NULL OR p.price >= :minPrice)
-                      AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-                      AND (:userId IS NULL OR p.owner.id = :userId)
-                    """
-    )
-    Page<ProductEntity> findByCategoryIdWithFiltersPage(
-            @Param("categoryId") Long categoryId,
-            @Param("name") String name,
-            @Param("minPrice") Double minPrice,
-            @Param("maxPrice") Double maxPrice,
-            @Param("userId") Long userId,
-            Pageable pageable
-    );
+        /*
+         * Consulta normal de productos de una categoría aplicando filtros.
+         */
+        @Query("""
+                        SELECT DISTINCT p
+                        FROM ProductEntity p
+                        JOIN p.categories c
+                        WHERE p.deleted = false
+                          AND c.id = :categoryId
+                          AND c.deleted = false
+                          AND p.owner.deleted = false
+                          AND (
+                                COALESCE(:name, '') = ''
+                                OR LOWER(p.name) LIKE LOWER(
+                                    CONCAT('%', COALESCE(:name, ''), '%')
+                                )
+                          )
+                          AND (:minPrice IS NULL OR p.price >= :minPrice)
+                          AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+                          AND (:userId IS NULL OR p.owner.id = :userId)
+                        """)
+        List<ProductEntity> findByCategoryIdWithFilters(
+                        @Param("categoryId") Long categoryId,
+                        @Param("name") String name,
+                        @Param("minPrice") Double minPrice,
+                        @Param("maxPrice") Double maxPrice,
+                        @Param("userId") Long userId);
 
-    /*
-     * Consulta paginada con Slice para productos de una categoría.
-     */
-    @Query("""
-            SELECT DISTINCT p
-            FROM ProductEntity p
-            JOIN p.categories c
-            WHERE p.deleted = false
-              AND c.id = :categoryId
-              AND c.deleted = false
-              AND p.owner.deleted = false
-              AND (
-                    COALESCE(:name, '') = ''
-                    OR LOWER(p.name) LIKE LOWER(
-                        CONCAT('%', COALESCE(:name, ''), '%')
-                    )
-              )
-              AND (:minPrice IS NULL OR p.price >= :minPrice)
-              AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-              AND (:userId IS NULL OR p.owner.id = :userId)
-            """)
-    Slice<ProductEntity> findByCategoryIdWithFiltersSlice(
-            @Param("categoryId") Long categoryId,
-            @Param("name") String name,
-            @Param("minPrice") Double minPrice,
-            @Param("maxPrice") Double maxPrice,
-            @Param("userId") Long userId,
-            Pageable pageable
-    );
+        /*
+         * Consulta paginada con Page para productos de una categoría.
+         */
+        @Query(value = """
+                        SELECT DISTINCT p
+                        FROM ProductEntity p
+                        JOIN p.categories c
+                        WHERE p.deleted = false
+                          AND c.id = :categoryId
+                          AND c.deleted = false
+                          AND p.owner.deleted = false
+                          AND (
+                                COALESCE(:name, '') = ''
+                                OR LOWER(p.name) LIKE LOWER(
+                                    CONCAT('%', COALESCE(:name, ''), '%')
+                                )
+                          )
+                          AND (:minPrice IS NULL OR p.price >= :minPrice)
+                          AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+                          AND (:userId IS NULL OR p.owner.id = :userId)
+                        """, countQuery = """
+                        SELECT COUNT(DISTINCT p)
+                        FROM ProductEntity p
+                        JOIN p.categories c
+                        WHERE p.deleted = false
+                          AND c.id = :categoryId
+                          AND c.deleted = false
+                          AND p.owner.deleted = false
+                          AND (
+                                COALESCE(:name, '') = ''
+                                OR LOWER(p.name) LIKE LOWER(
+                                    CONCAT('%', COALESCE(:name, ''), '%')
+                                )
+                          )
+                          AND (:minPrice IS NULL OR p.price >= :minPrice)
+                          AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+                          AND (:userId IS NULL OR p.owner.id = :userId)
+                        """)
+        Page<ProductEntity> findByCategoryIdWithFiltersPage(
+                        @Param("categoryId") Long categoryId,
+                        @Param("name") String name,
+                        @Param("minPrice") Double minPrice,
+                        @Param("maxPrice") Double maxPrice,
+                        @Param("userId") Long userId,
+                        Pageable pageable);
+
+        /*
+         * Consulta paginada con Slice para productos de una categoría.
+         */
+        @Query("""
+                        SELECT DISTINCT p
+                        FROM ProductEntity p
+                        JOIN p.categories c
+                        WHERE p.deleted = false
+                          AND c.id = :categoryId
+                          AND c.deleted = false
+                          AND p.owner.deleted = false
+                          AND (
+                                COALESCE(:name, '') = ''
+                                OR LOWER(p.name) LIKE LOWER(
+                                    CONCAT('%', COALESCE(:name, ''), '%')
+                                )
+                          )
+                          AND (:minPrice IS NULL OR p.price >= :minPrice)
+                          AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+                          AND (:userId IS NULL OR p.owner.id = :userId)
+                        """)
+        Slice<ProductEntity> findByCategoryIdWithFiltersSlice(
+                        @Param("categoryId") Long categoryId,
+                        @Param("name") String name,
+                        @Param("minPrice") Double minPrice,
+                        @Param("maxPrice") Double maxPrice,
+                        @Param("userId") Long userId,
+                        Pageable pageable);
 }
