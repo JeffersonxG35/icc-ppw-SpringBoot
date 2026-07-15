@@ -98,3 +98,18 @@ Porque la base de datos aplica LIMIT y OFFSET antes de enviar los datos. Paginar
 ### Productos del usuario con ID
 <img src="assets/slice.png" width="600">
 <img src="assets/slice2.png" width="600">
+
+## Ejecución del proyecto con Docker
+
+Se creó una imagen Docker del proyecto Spring Boot utilizando el archivo Dockerfile. Luego se ejecutó un contenedor llamado fundamentos01-app, conectado a la base de datos PostgreSQL mediante la red fundamentos-net.
+
+<img src="assets/dockerImage.png" width="600">
+
+
+
+### Verificación
+
+Se comprobó la ejecución con el comando docker ps, donde se evidenció que ambos contenedores estaban activos. Además, se probó el endpoint /api/status, obteniendo una respuesta correcta del servicio.
+
+<img src="assets/contenedor.png" width="600">
+<img src="assets/status.png" width="600">
