@@ -51,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
 
-            if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
+           if (StringUtils.hasText(jwt) && jwtUtil.validateAccessToken(jwt)) {
 
                 String email = jwtUtil.getEmailFromToken(jwt);
 

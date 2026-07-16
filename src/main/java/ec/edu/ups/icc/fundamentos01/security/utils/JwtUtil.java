@@ -1,8 +1,18 @@
 package ec.edu.ups.icc.fundamentos01.security.utils;
 
+import java.util.Date;
+import java.util.stream.Collectors;
+
+import javax.crypto.SecretKey;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Component;
+
 import ec.edu.ups.icc.fundamentos01.security.config.JwtProperties;
 import ec.edu.ups.icc.fundamentos01.security.services.UserDetailsImpl;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -11,21 +21,15 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.stream.Collectors;
-
 @Component
 public class JwtUtil {
 
     private static final Logger logger =
             LoggerFactory.getLogger(JwtUtil.class);
+
+    private static final String TOKEN_TYPE_CLAIM = "type";
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
 
     private final JwtProperties jwtProperties;
     private final SecretKey key;
@@ -38,48 +42,48 @@ public class JwtUtil {
         );
     }
 
-    /**
-     * Genera token JWT después del login.
-     */
-    public String generateToken(Authentication authentication) {
-
+    public String generateAccessToken(
+            Authentication authentication
+    ) {
         UserDetailsImpl userPrincipal =
                 (UserDetailsImpl) authentication.getPrincipal();
 
-        Date now = new Date();
-
-        Date expiryDate = new Date(
-                now.getTime() + jwtProperties.getExpiration()
+        return buildToken(
+                userPrincipal,
+                jwtProperties.getExpiration(),
+                ACCESS_TOKEN_TYPE
         );
-
-        String roles = userPrincipal.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
-
-        return Jwts.builder()
-                .subject(String.valueOf(userPrincipal.getId()))
-                .claim("email", userPrincipal.getEmail())
-                .claim("name", userPrincipal.getName())
-                .claim("roles", roles)
-                .issuer(jwtProperties.getIssuer())
-                .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(key, Jwts.SIG.HS256)
-                .compact();
     }
 
-    /**
-     * Genera token JWT directamente desde UserDetailsImpl.
-     */
-    public String generateTokenFromUserDetails(
+    public String generateAccessTokenFromUserDetails(
             UserDetailsImpl userDetails
     ) {
+        return buildToken(
+                userDetails,
+                jwtProperties.getExpiration(),
+                ACCESS_TOKEN_TYPE
+        );
+    }
 
+    public String generateRefreshToken(
+            UserDetailsImpl userDetails
+    ) {
+        return buildToken(
+                userDetails,
+                jwtProperties.getRefreshExpiration(),
+                REFRESH_TOKEN_TYPE
+        );
+    }
+
+    private String buildToken(
+            UserDetailsImpl userDetails,
+            Long expirationMs,
+            String tokenType
+    ) {
         Date now = new Date();
 
         Date expiryDate = new Date(
-                now.getTime() + jwtProperties.getExpiration()
+                now.getTime() + expirationMs
         );
 
         String roles = userDetails.getAuthorities()
@@ -92,6 +96,7 @@ public class JwtUtil {
                 .claim("email", userDetails.getEmail())
                 .claim("name", userDetails.getName())
                 .claim("roles", roles)
+                .claim(TOKEN_TYPE_CLAIM, tokenType)
                 .issuer(jwtProperties.getIssuer())
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -99,77 +104,66 @@ public class JwtUtil {
                 .compact();
     }
 
-    /**
-     * Obtiene el ID del usuario desde el token.
-     */
-    public Long getUserIdFromToken(String token) {
+    public String generateToken(
+            Authentication authentication
+    ) {
+        return generateAccessToken(authentication);
+    }
 
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+    public String generateTokenFromUserDetails(
+            UserDetailsImpl userDetails
+    ) {
+        return generateAccessTokenFromUserDetails(userDetails);
+    }
+
+    public Long getUserIdFromToken(String token) {
+        Claims claims = getClaims(token);
 
         return Long.parseLong(claims.getSubject());
     }
 
-    /**
-     * Obtiene el email desde el token.
-     */
     public String getEmailFromToken(String token) {
-
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        Claims claims = getClaims(token);
 
         return claims.get("email", String.class);
     }
 
-    /**
-     * Valida firma, estructura y expiración del token.
-     */
+    public String getTokenType(String token) {
+        Claims claims = getClaims(token);
+
+        return claims.get(TOKEN_TYPE_CLAIM, String.class);
+    }
+
     public boolean validateToken(String authToken) {
-
         try {
-            Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(authToken);
-
+            getClaims(authToken);
             return true;
 
         } catch (SignatureException ex) {
-
             logger.error(
                     "Firma JWT inválida: {}",
                     ex.getMessage()
             );
 
         } catch (MalformedJwtException ex) {
-
             logger.error(
                     "Token JWT malformado: {}",
                     ex.getMessage()
             );
 
         } catch (ExpiredJwtException ex) {
-
             logger.error(
                     "Token JWT expirado: {}",
                     ex.getMessage()
             );
 
         } catch (UnsupportedJwtException ex) {
-
             logger.error(
                     "Token JWT no soportado: {}",
                     ex.getMessage()
             );
 
         } catch (IllegalArgumentException ex) {
-
             logger.error(
                     "JWT claims string está vacío: {}",
                     ex.getMessage()
@@ -177,5 +171,23 @@ public class JwtUtil {
         }
 
         return false;
+    }
+
+    public boolean validateAccessToken(String token) {
+        return validateToken(token)
+                && ACCESS_TOKEN_TYPE.equals(getTokenType(token));
+    }
+
+    public boolean validateRefreshToken(String token) {
+        return validateToken(token)
+                && REFRESH_TOKEN_TYPE.equals(getTokenType(token));
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

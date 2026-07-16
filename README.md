@@ -113,3 +113,33 @@ Se comprobó la ejecución con el comando docker ps, donde se evidenció que amb
 
 <img src="assets/contenedor.png" width="600">
 <img src="assets/status.png" width="600">
+
+
+
+
+
+### Login con refresh token
+
+### Refresh exitoso
+
+### Logout
+
+### Refresh después de logout
+
+¿Cuál es la diferencia entre access token y refresh token?
+
+El access token se utiliza para acceder a los endpoints protegidos del sistema. Tiene una duración corta y se envía en el encabezado Authorization como Bearer token.
+
+El refresh token, en cambio, se utiliza únicamente para renovar el access token cuando este expira. Tiene una duración mayor y se envía en el cuerpo de la petición al endpoint /api/auth/refresh.
+
+¿Por qué el refresh token no debe usarse en Authorization: Bearer?
+
+El refresh token no debe usarse como Bearer token porque no está diseñado para acceder directamente a los recursos protegidos de la API. Su única función es renovar la sesión.
+
+Por seguridad, el filtro JWT valida que los tokens usados en el encabezado Authorization sean únicamente de tipo access. De esta manera, si un usuario intenta usar un refresh token para consumir un endpoint protegido, el sistema lo rechaza con 401 Unauthorized.
+
+¿Qué significa rotar un refresh token?
+
+Rotar un refresh token significa que, cada vez que se usa para renovar la sesión, el refresh token anterior se revoca y se genera uno nuevo.
+
+Esto evita que el mismo refresh token pueda reutilizarse indefinidamente. Si alguien intenta usar un refresh token antiguo, el sistema lo rechaza porque ya fue revocado.
