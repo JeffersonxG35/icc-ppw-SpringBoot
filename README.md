@@ -119,12 +119,17 @@ Se comprobó la ejecución con el comando docker ps, donde se evidenció que amb
 
 
 ### Login con refresh token
+<img src="assets/login_refresh_token.png" width="600">
 
 ### Refresh exitoso
+<img src="assets/refresh_exitoso.png" width="600">
 
 ### Logout
+<img src="assets/logout.png" width="600">
 
 ### Refresh después de logout
+<img src="assets/logout2.png" width="600">
+
 
 ¿Cuál es la diferencia entre access token y refresh token?
 

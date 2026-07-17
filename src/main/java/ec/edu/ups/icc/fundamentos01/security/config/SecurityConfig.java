@@ -87,7 +87,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/moderator/**").hasAnyRole("ADMIN", "MODERATOR")
                         //.requestMatchers("/users/**").permitAll()
-
+                        
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()
 
                 );
