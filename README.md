@@ -123,7 +123,7 @@ Se comprobó la ejecución con el comando docker ps, donde se evidenció que amb
 
 ## REFRESH_TOKEN
 ### Login con refresh token
-<img src="assets/login_refresh_token.png" width="600">
+<img src="assets/Login_refresh_token.png" width="600">
 
 ### Refresh exitoso
 <img src="assets/refresh_exitoso.png" width="600">
@@ -185,10 +185,10 @@ Se configura Swagger para que tenga una opción de autorización. Luego, cuando 
 
 ## Despliegue portable de Spring Boot con Docker
 ### docker ps de Ubuntu Server
-<img src="assets/dockerPs.png" width="600">
+<img src="assets/dockerPs.PNG" width="600">
 
 ### curl de /api/actuator/health desde Ubuntu Server
-<img src="assets/curlUbuntu.png" width="600">
+<img src="assets/curlUbuntu.PNG" width="600">
 
 ### curl de /api/actuator/health desde la máquina anfitriona
 <img src="assets/curlMaqAnfitriona.png" width="600">
