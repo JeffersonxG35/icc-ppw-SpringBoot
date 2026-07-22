@@ -33,9 +33,11 @@ La organización modular permite dividir la aplicación en componentes independi
 
 El flujo de datos entre la API REST y PostgreSQL se realiza mediante un ORM que traduce las peticiones HTTP en consultas SQL y viceversa, apoyándose en BaseEntity como un estándar de arquitectura. Al entrar, la petición procesa los datos y BaseEntity inyecta automáticamente campos clave como el id y las marcas de tiempo de auditoría (createdAt, updatedAt) antes de que el ORM ejecute la inserción o actualización en la base de datos. Al salir, PostgreSQL devuelve los registros, el ORM los convierte en objetos estructurados que heredan de BaseEntity, y finalmente la API los serializa en formato JSON para entregarlos al cliente.
 
+## *Respuesta de error al enviar un POST inválido*
 ### Respuesta 400 Bad Request al enviar los datos incorrectos.
 <img src="assets/09_usuario_erroneo.png" width="600">
 
+## *CRUD de productos*
 ### Eliminación de un producto
 <img src="assets/10_eliminado_exitoso.png" width="600">
 
@@ -44,6 +46,8 @@ El flujo de datos entre la API REST y PostgreSQL se realiza mediante un ORM que 
 ### Intento de eliminar un producto eliminado.
 
 <img src="assets/11_intento_eliminacion.png" width="600">
+
+---
 
 ### Actualización Parcial de Contraseña
 <img src="assets/12_hashPass.png" width="600">
@@ -117,7 +121,7 @@ Se comprobó la ejecución con el comando docker ps, donde se evidenció que amb
 
 
 
-
+## REFRESH_TOKEN
 ### Login con refresh token
 <img src="assets/login_refresh_token.png" width="600">
 
@@ -134,17 +138,65 @@ Se comprobó la ejecución con el comando docker ps, donde se evidenció que amb
 ¿Cuál es la diferencia entre access token y refresh token?
 
 El access token se utiliza para acceder a los endpoints protegidos del sistema. Tiene una duración corta y se envía en el encabezado Authorization como Bearer token.
-
 El refresh token, en cambio, se utiliza únicamente para renovar el access token cuando este expira. Tiene una duración mayor y se envía en el cuerpo de la petición al endpoint /api/auth/refresh.
 
 ¿Por qué el refresh token no debe usarse en Authorization: Bearer?
 
 El refresh token no debe usarse como Bearer token porque no está diseñado para acceder directamente a los recursos protegidos de la API. Su única función es renovar la sesión.
-
 Por seguridad, el filtro JWT valida que los tokens usados en el encabezado Authorization sean únicamente de tipo access. De esta manera, si un usuario intenta usar un refresh token para consumir un endpoint protegido, el sistema lo rechaza con 401 Unauthorized.
 
 ¿Qué significa rotar un refresh token?
 
 Rotar un refresh token significa que, cada vez que se usa para renovar la sesión, el refresh token anterior se revoca y se genera uno nuevo.
-
 Esto evita que el mismo refresh token pueda reutilizarse indefinidamente. Si alguien intenta usar un refresh token antiguo, el sistema lo rechaza porque ya fue revocado.
+
+## Documentación de API con Swagger y OpenAPI
+
+### Swagger UI cargado y JSON OpenAPI
+<img src="assets/swaggerUI_jsonOpenApi.png" width="600">
+
+### AuthController documentado
+<img src="assets/authControllerDoc.png" width="600">
+
+### Botón Authorize
+<img src="assets/btnAuthorize.png" width="600">
+
+### Endpoint protegido sin token
+<img src="assets/endpointProtSinToken.png" width="600">
+
+### Endpoint protegido con token desde Swagger
+<img src="assets/endpointProtConToken.png" width="600">
+
+### Endpoint ADMIN con usuario normal
+<img src="assets/endpointNormalUser.png" width="600">
+
+### Endpoint ADMIN con usuario administrador
+<img src="assets/endpointAdminUser.png" width="600">
+
+
+¿Cuál es la diferencia entre Swagger UI y OpenAPI?
+OpenAPI es la descripción de la API. Es decir, funciona como un documento donde se indica qué endpoints existen, qué métodos usan, qué datos reciben y qué respuestas pueden devolver.En cambio, Swagger UI es la interfaz visual que permite ver esa documentación de una forma más ordenada y fácil de usar. Además, desde Swagger UI se pueden probar los endpoints directamente desde el navegador.
+
+¿Por qué Swagger puede ser público pero los endpoints seguir protegidos?
+Swagger puede ser público porque solamente muestra la documentación de la API. Es decir, permite ver qué rutas existen y cómo se deben consumir, pero eso no significa que cualquier usuario pueda ejecutar correctamente todos los endpoints. Los endpoints siguen protegidos porque la seguridad se controla desde Spring Security.
+
+¿Cómo se configura Swagger para enviar un JWT en Authorization: Bearer?
+Se configura Swagger para que tenga una opción de autorización. Luego, cuando el usuario inicia sesión, copia el token que recibe y lo pega en el botón Authorize de Swagger. Después de eso, Swagger envía automáticamente ese token en cada petición protegida. Así, la API puede reconocer al usuario y permitirle acceder a los endpoints que requieren autenticación.
+
+## Despliegue portable de Spring Boot con Docker
+### docker ps de Ubuntu Server
+<img src="assets/dockerPs.png" width="600">
+
+### curl de /api/actuator/health desde Ubuntu Server
+<img src="assets/curlUbuntu.png" width="600">
+
+### curl de /api/actuator/health desde la máquina anfitriona
+<img src="assets/curlMaqAnfitriona.png" width="600">
+
+### Explicación de la conexión a PostgreSQL externo o evidencia de fallback utilizado.
+En la práctica se utilizó PostgreSQL externo, ejecutado en Windows mediante el contenedor Docker postgres-dev. Este contenedor tenía publicado el puerto 5432, por lo que Debian pudo conectarse a la base de datos usando la IP de Windows.
+En el archivo .env.ubuntu se configuró la conexión así: DATABASE_URL=jdbc:postgresql://192.168.0.241:5432/devdb
+Además, se verificó desde Debian que el puerto estaba disponible, obteniendo como resultado Puerto abierto. Por lo tanto, la aplicación Spring Boot pudo conectarse correctamente a la base de datos externa y no fue necesario usar el fallback de PostgreSQL dentro de Debian.
+
+### Consumo de login desde la máquina anfitriona
+<img src="assets/consumoLogin.png" width="600">
